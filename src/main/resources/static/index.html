@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Chat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f5f7fb;
+            --panel: #ffffff;
+            --text: #162033;
+            --muted: #667085;
+            --line: #d9e1ec;
+            --primary: #0f766e;
+            --primary-dark: #115e59;
+            --accent: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, Arial, sans-serif;
+        }
+
+        .shell {
+            display: grid;
+            grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: #111827;
+            color: #f9fafb;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 28px;
+        }
+
+        .brand {
+            display: grid;
+            gap: 8px;
+        }
+
+        .brand h1 {
+            margin: 0;
+            font-size: 28px;
+            line-height: 1.1;
+            letter-spacing: 0;
+        }
+
+        .brand p,
+        .status p {
+            margin: 0;
+            color: #cbd5e1;
+            line-height: 1.55;
+        }
+
+        .status {
+            margin-top: auto;
+            display: grid;
+            gap: 12px;
+        }
+
+        .pill {
+            width: fit-content;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 999px;
+            padding: 8px 12px;
+            color: #e5e7eb;
+            font-size: 13px;
+        }
+
+        main {
+            padding: 32px;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            gap: 18px;
+            min-width: 0;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: end;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .topbar h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .topbar span {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .identity {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        input {
+            width: min(260px, 100%);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font: inherit;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.14);
+        }
+
+        .messages {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 18px;
+            overflow-y: auto;
+            min-height: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .empty {
+            margin: auto;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .message {
+            max-width: min(680px, 88%);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px 14px;
+            background: #f8fafc;
+        }
+
+        .message.mine {
+            align-self: flex-end;
+            background: #e6fffb;
+            border-color: #99f6e4;
+        }
+
+        .meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 6px;
+            color: var(--muted);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .content {
+            margin: 0;
+            overflow-wrap: anywhere;
+            line-height: 1.45;
+        }
+
+        .composer {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 12px;
+        }
+
+        .composer input {
+            width: 100%;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            background: var(--primary);
+            color: #ffffff;
+            padding: 0 20px;
+            min-height: 48px;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: var(--primary-dark);
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        @media (max-width: 760px) {
+            .shell {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                padding: 24px;
+            }
+
+            .status {
+                margin-top: 0;
+            }
+
+            main {
+                padding: 20px;
+            }
+
+            .topbar {
+                align-items: start;
+                flex-direction: column;
+            }
+
+            .composer {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <h1>Real-Time Chat</h1>
+            <p>Spring Boot, WebSockets, STOMP, and MySQL working together in a clean chat project.</p>
+        </div>
+        <div class="status">
+            <div class="pill" id="connectionStatus">Connecting...</div>
+            <p>Open this app in two browser tabs to test instant message delivery.</p>
+        </div>
+    </aside>
+
+    <main>
+        <section class="topbar">
+            <div>
+                <h2>Public Room</h2>
+                <span>Messages are saved and loaded from MySQL.</span>
+            </div>
+            <div class="identity">
+                <label for="senderName">Name</label>
+                <input id="senderName" maxlength="60" placeholder="Your name">
+            </div>
+        </section>
+
+        <section class="messages" id="messages">
+            <p class="empty" id="emptyState">No messages yet.</p>
+        </section>
+
+        <form class="composer" id="messageForm">
+            <input id="messageInput" maxlength="1000" placeholder="Type your message..." autocomplete="off">
+            <button id="sendButton" type="submit" disabled>Send</button>
+        </form>
+    </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+    const messagesEl = document.querySelector("#messages");
+    const emptyState = document.querySelector("#emptyState");
+    const form = document.querySelector("#messageForm");
+    const input = document.querySelector("#messageInput");
+    const senderName = document.querySelector("#senderName");
+    const sendButton = document.querySelector("#sendButton");
+    const connectionStatus = document.querySelector("#connectionStatus");
+
+    let stompClient = null;
+
+    senderName.value = localStorage.getItem("chat.sender") || "";
+    senderName.addEventListener("input", () => {
+        localStorage.setItem("chat.sender", senderName.value.trim());
+    });
+
+    function connect() {
+        const socket = new SockJS("/ws-chat");
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+
+        stompClient.connect({}, () => {
+            connectionStatus.textContent = "Connected";
+            sendButton.disabled = false;
+            stompClient.subscribe("/topic/messages", event => {
+                renderMessage(JSON.parse(event.body));
+            });
+            loadHistory();
+        }, () => {
+            connectionStatus.textContent = "Disconnected";
+            sendButton.disabled = true;
+            setTimeout(connect, 3000);
+        });
+    }
+
+    async function loadHistory() {
+        const response = await fetch("/api/messages");
+        const messages = await response.json();
+        messagesEl.querySelectorAll(".message").forEach(message => message.remove());
+        messages.forEach(renderMessage);
+    }
+
+    function renderMessage(message) {
+        emptyState.style.display = "none";
+
+        const item = document.createElement("article");
+        item.className = "message";
+        if (message.sender === currentSender()) {
+            item.classList.add("mine");
+        }
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.innerHTML = `<span>${escapeHtml(message.sender)}</span><span>${formatTime(message.sentAt)}</span>`;
+
+        const content = document.createElement("p");
+        content.className = "content";
+        content.textContent = message.content;
+
+        item.append(meta, content);
+        messagesEl.appendChild(item);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function currentSender() {
+        return senderName.value.trim() || "Anonymous";
+    }
+
+    function formatTime(value) {
+        return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function escapeHtml(value) {
+        const div = document.createElement("div");
+        div.textContent = value;
+        return div.innerHTML;
+    }
+
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+        const content = input.value.trim();
+        if (!content || !stompClient) {
+            return;
+        }
+
+        stompClient.send("/app/chat.send", {}, JSON.stringify({
+            sender: currentSender(),
+            content
+        }));
+        input.value = "";
+        input.focus();
+    });
+
+    connect();
+</script>
+</body>
+</html>
